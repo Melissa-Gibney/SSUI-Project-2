@@ -92,6 +92,42 @@ export class Column extends Group {
     // Our height is set to the height determined by stacking our children vertically.
     protected override _doLocalSizing() : void {
         //=== YOUR CODE HERE ===
+        //Set initial heights to zero
+        let newNatHeight: number = 0;
+        let newNatWidth: number = 0;
+        let newMinHeight: number = 0;
+
+        //Set initial widths to zero (max width set to first child's width to prevent issues with the max width being 0)
+        let newMinWidth: number = 0;
+        let newMaxHeight: number = 0;
+        let newMaxWidth: number = 0;
+
+        //Loop through every child. Add their heights to the hConfig and 
+        //update the wConfig if the widths are higher than the current values
+        this.children.forEach(child => {
+            newMinHeight += child.hConfig.min;
+            newNatHeight += child.hConfig.nat;
+            newMaxHeight += child.hConfig.max;
+
+            if(child.minW > newMinWidth)
+            {
+                newMinWidth = child.minW;
+            }
+
+            if(child.naturalW > newNatWidth)
+            {
+                newNatWidth = child.naturalW;
+            }
+
+            if(newMaxWidth < child.maxW)
+            {
+                newMaxWidth = child.maxW;
+            }
+        });
+
+        //Set wConfig and hConfig to the new values
+        this.wConfig = {min: newMinWidth, nat: newNatWidth, max: newMaxWidth};
+        this.hConfig = {min: newMinHeight, nat: newNatHeight, max: newMaxHeight};
     }
 
     //. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
@@ -156,6 +192,19 @@ export class Column extends Group {
         let numSprings = 0; 
 
         //=== YOUR CODE HERE ===
+        this.children.forEach(child => {
+            //If child is not a spring, then add up its natural height and available compression
+            //Else, increase the spring coubt
+            if(!(child instanceof Spring))
+            {
+                natSum += child.naturalH;
+                availCompr += (child.naturalH - child.minH);
+            }
+            else
+            {
+                numSprings++;
+            }
+        });
 
         return [natSum, availCompr, numSprings];
     }
@@ -168,6 +217,20 @@ export class Column extends Group {
     // the space at the bottom of the column as a fallback strategy).
     protected _expandChildSprings(excess : number, numSprings : number) : void {
         //=== YOUR CODE HERE ===
+        //If there are children that are springs
+        if(numSprings > 0)
+        {
+            //Calculate the amount to expand each spring and iterate through the children
+            const amountToAdd: number = excess/numSprings;
+            this.children.forEach(child => {
+                //If the child's type is a spring, then set this height to the spring's height
+                if(child instanceof Spring)
+                {
+                    child.h = amountToAdd;
+                    child.damageAll();
+                }
+            });
+        }
     }
 
     //. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
@@ -188,6 +251,12 @@ export class Column extends Group {
         // from the natural height of that child, to get the assigned height.
         for (let child of this.children) {
             //=== YOUR CODE HERE ===
+            //Calculate the amount of available compression and the amount of shortfall
+            //Subtract the amount of shortfall from the child's height and damage the child
+            const fractionOfAvailCompr: number = (child.naturalH - child.minH)/availCompr;
+            const fractionOfShortfall: number = fractionOfAvailCompr * shortfall;
+            child.h = child.naturalH - fractionOfShortfall;
+            child.damageAll();
         }
 }
 
@@ -232,6 +301,27 @@ export class Column extends Group {
         // apply our justification setting for the horizontal
         
         //=== YOUR CODE HERE ===
+        let xpos: number = 0;
+        this.children.forEach(child => {
+            //Keep in mind that (x, y) is the top left corner of the object
+            if(this.wJustification === 'center')
+            {
+                //Center the child in the parent
+                xpos = this.w/2 - child.w/2;
+            }
+            else if(this.wJustification === 'right')
+            {
+                //Move the child to the rightmost side of the parent, but make sure it has enough
+                //room for its own width
+                xpos = this.w - child.w;
+            }
+            else
+            {
+                //There is already left-justification, so xpos doesn't need to change
+                xpos = 0;
+            }
+            child.x = xpos;
+        });
     }
 
     //. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .

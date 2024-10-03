@@ -98,6 +98,8 @@ export class TopObject extends DrawnObjectBase {
     // For this object we clear the canvas behind the children that we draw
     protected override _drawSelfOnly(ctx: CanvasRenderingContext2D): void {
         //=== YOUR CODE HERE ===
+        //Clear the canvas behind the object
+        ctx.clearRect(0, 0, this.w, this.h);
     }
 
     //. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
@@ -157,11 +159,13 @@ export class TopObject extends DrawnObjectBase {
                 // clip to our bounds
                 
                 //=== YOUR CODE HERE ===
+                this.applyClip(this.canvasContext, 0, 0, this.w, this.h);
 
                 // within our bounds clip to just the damaged region
                 
                 //=== YOUR CODE HERE ===
-
+                this.applyClip(this.canvasContext, this._damageRectX, this._damageRectY, this._damageRectW, this._damageRectH);
+                
                 // after this we will no longer be damaged, so reset our damage tracking
                 // rectangle to be our whole bounds
                 this._damageRectX = this._damageRectY = 0;
@@ -171,6 +175,7 @@ export class TopObject extends DrawnObjectBase {
                 // do the actual drawing from here down the tree
                 
                 //=== YOUR CODE HERE ===
+                this.draw(this.canvasContext);
 
             } catch(err) {
                 // catch any exception thrown and echo the message, but then 
@@ -203,6 +208,54 @@ export class TopObject extends DrawnObjectBase {
     // damage instead of passing it up the tree (since there is no up  from here).
     public override damageArea(xv: number, yv: number, wv: number, hv: number): void {
         //=== YOUR CODE HERE ===
+        //Account for damage already having occurred
+        if(this.damaged)
+        {
+            //If the damaged area has increased, then expand the bounds
+            let minX: number = xv;
+            let minY: number = yv;
+            let maxW: number = wv;
+            let maxH: number = hv;
+
+            //If the current min is larger than this object's x, set it to this x
+            if(minX > this.x)
+            {
+                minX = this.x;
+            }
+
+            //If the current min is larger than this object's y, set it to this y
+            if(minY > this.y)
+            {
+                minY = this.y;
+            }
+
+            //If the current max is smaller than this object's width, set it to this width
+            if(maxW < this.w)
+            {
+                maxW = this.w;
+            }
+
+            //If the current max is smaller than this object's height, set it to this height
+            if(maxH < this.h)
+            {
+                maxH = this.h;
+            }
+
+            //Set the damaged rectangle to the new mins and maxes
+            this._damageRectX = minX;
+            this._damageRectY = minY;
+            this._damageRectW = maxW;
+            this._damageRectH = maxH;
+        }
+        else
+        {
+            //Set the damaged rectangle to the given values
+            this._damageRectX = xv;
+            this._damageRectY = yv;
+            this._damageRectW = wv;
+            this._damageRectH = hv;
+        }
+        this._damaged = true;
     }
     
     //. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .  

@@ -113,6 +113,8 @@ export class DrawnObjectBase {
              // that could affect the display
 
             //=== YOUR CODE HERE ===
+            this._x = v;
+            this.damageAll();
         }
     }    
     //. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
@@ -122,6 +124,11 @@ export class DrawnObjectBase {
     public get y() : number {return this._y;}
     public set y(v : number) {
         //=== YOUR CODE HERE ===
+        if(!(v === this._y))
+        {
+            this._y = v;
+            this.damageAll();
+        }
     }
 
     //. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
@@ -138,8 +145,17 @@ export class DrawnObjectBase {
     // Property for the width of this object
     protected _w : number = 42;
     public get w() : number {return this._w;}
-    public set w(v : number) {
-            //=== YOUR CODE HERE ===
+    public set w(v : number) 
+    {
+        //=== YOUR CODE HERE ===
+        //If the new width is not equal to the current width after changing it to be within the current width's bounds
+        //Then update the current width
+        v = SizeConfig.withinConfig(v, this.wConfig);
+        if(!(this._w === v))
+        {
+            this._w = v;
+            this.damageAll();
+        }
     }
 
     //. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
@@ -149,6 +165,12 @@ export class DrawnObjectBase {
     public get wConfig() : SizeConfigLiteral {return this._wConfig;}
     public set wConfig(v : SizeConfigLiteral) {
         //=== YOUR CODE HERE ===
+        //Only update this if v has changed
+        if(!(v === this._wConfig))
+        {
+            this._wConfig = v;
+            this.damageAll();
+        }
     }
         
     public get naturalW() : number {return this._wConfig.nat;}
@@ -174,6 +196,14 @@ export class DrawnObjectBase {
     public get h() : number {return this._h;}
     public set h(v : number) {
         //=== YOUR CODE HERE ===
+        //If the new height is not equal to the current height after changing it to be within the current height's bounds
+        //Then update the current height
+        v = SizeConfig.withinConfig(v, this.hConfig);
+        if(!(this._h === v))
+        {
+            this._h = v;
+            this.damageAll();
+        }
     }
 
     //. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
@@ -183,6 +213,12 @@ export class DrawnObjectBase {
     public get hConfig() : SizeConfigLiteral {return this._hConfig;}
     public set hConfig(v : SizeConfigLiteral) {
         //=== YOUR CODE HERE ===
+        //Only update this if v has changed
+        if(!(v === this._hConfig))
+        {
+            this._hConfig = v;
+            this.damageAll();
+        }
     }
 
     public get naturalH() : number {return this._hConfig.nat;}
@@ -216,6 +252,13 @@ export class DrawnObjectBase {
     public get visible() : boolean {return this._visible;}
     public set visible(v : boolean) {
             //=== YOUR CODE HERE ===
+            //Only update this if v has changed
+            if(!(this._visible === v))
+            {
+                this.damageAll();
+                this.visible = v;
+                this.damageAll();
+            }
     }
 
     //-------------------------------------------------------------------
@@ -435,12 +478,17 @@ export class DrawnObjectBase {
     //-------------------------------------------------------------------
 
     // Utility routine to apply a clipping rectangle to the given drawing context.
-    // This reduces the cippping area to the intersection of any existing clipping
+    // This reduces the clipping area to the intersection of any existing clipping
     // area and the given rectangle.
     public applyClip(ctx : DrawContext, 
                      clipx : number, clipy : number, clipw : number, cliph : number) 
     {
         //=== YOUR CODE HERE ===
+        //Draw and clip to the specified rectangle
+        ctx.beginPath();
+        ctx.rect(clipx, clipy, clipw, cliph);
+        ctx.clip();
+        ctx.closePath();
     }
 
     // Utility routine to create a new rectangular path at our bounding box.
@@ -506,6 +554,14 @@ export class DrawnObjectBase {
         ctx.save();
 
         //=== YOUR CODE HERE ===
+
+        let child = this.children[childIndx];
+
+        //Translate children coordinates
+        ctx.translate(child.x, child.y);
+
+        //Clip to child bounds
+        this.applyClip(ctx, 0, 0, child.w, child.h);
     }
 
     
@@ -633,6 +689,7 @@ export class DrawnObjectBase {
     // our parent.
     public damageArea(xv: number, yv : number, wv : number, hv : number) : void {
         //=== YOUR CODE HERE ===
+        this.parent?._damageFromChild(this, xv, yv, wv, hv);
     }
 
     //. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
@@ -657,6 +714,11 @@ export class DrawnObjectBase {
                                wv : number, hv: number) : void 
     {
             //=== YOUR CODE HERE ===
+            //Convert the child coordinates to the parent's coordinate system
+            let localX: number = child.x + xInChildCoords;
+            let localY: number = child.y + yInChildCoords;
+            //Damage the area of this object
+            this.damageArea(localX, localY, wv, hv);
     }
 
     //. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .

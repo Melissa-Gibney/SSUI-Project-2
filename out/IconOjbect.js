@@ -75,6 +75,14 @@ export class IconObject extends DrawnObjectBase {
     get resizesImage() { return this._resizesImage; }
     set resizesImage(v) {
         //=== YOUR CODE HERE ===
+        //If the value has changed, set resizesImage to the value
+        if (!(this.resizesImage === v)) {
+            this._resizesImage = v;
+            //If the canvas needs to be resized, then resize it
+            if (v) {
+                this._resize();
+            }
+        }
     }
     //-------------------------------------------------------------------
     // Methods
@@ -82,6 +90,14 @@ export class IconObject extends DrawnObjectBase {
     // If our size is determined by the image, resize us to match (otherwise do nothing).
     _resize() {
         //=== YOUR CODE HERE ===
+        if (!this.resizesImage) {
+            //If the image is not undefined, then set the object's height and width to the height and width of the image and pass the danage up the tree
+            if (!(this.image === undefined || this.image.canvasImage === undefined)) {
+                this.w = this.image.canvasImage.width;
+                this.h = this.image.canvasImage.height;
+                this.damageAll();
+            }
+        }
     }
     //. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
     // Function that is called when our loading is complete
@@ -106,9 +122,13 @@ export class IconObject extends DrawnObjectBase {
             return;
         if (this.resizesImage) {
             //=== YOUR CODE HERE ===
+            //Draw the image with the object's bounds
+            ctx.drawImage(this.image.canvasImage, 0, 0, this.w, this.h);
         }
         else {
             //=== YOUR CODE HERE ===
+            //Draw the image using its own bounds
+            ctx.drawImage(this.image.canvasImage, 0, 0, this.image.canvasImage.width, this.image.canvasImage.height);
         }
     }
 } // end of IconObject class

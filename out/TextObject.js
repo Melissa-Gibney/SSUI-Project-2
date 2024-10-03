@@ -25,16 +25,29 @@ export class TextObject extends DrawnObjectBase {
     get text() { return this._text; }
     set text(v) {
         //=== YOUR CODE HERE ===
+        if (!(this._text === v)) {
+            this._text = v;
+            this._recalcSize();
+            //this.damageAll();
+        }
     }
     get font() { return this._font; }
     set font(v) {
         //=== YOUR CODE HERE ===
+        this.font = v;
+        this._recalcSize();
+        //this.damageAll();
     }
     get padding() { return this._padding; }
     set padding(v) {
         if (typeof v === 'number')
             v = { w: v, h: v };
         //=== YOUR CODE HERE ===
+        if (!(v === this._padding)) {
+            this._padding = v;
+            this._recalcSize();
+            //this.damageArea(0, 0, this.w, this.h);
+        }
     }
     get renderType() { return this._renderType; }
     set rederType(v) { this._renderType = v; }
@@ -46,6 +59,11 @@ export class TextObject extends DrawnObjectBase {
     // Recalculate the size of this object based on the size of the text
     _recalcSize(ctx) {
         //=== YOUR CODE HERE ===
+        //Get the current text size
+        let curSize = this._measureText(this.text, this.font, ctx);
+        //Set the size of the object to the current text size + the width of the padding on either side of the text
+        this.size = { w: curSize.w + 2 * this.padding.w, h: curSize.h };
+        this.damageAll();
         // set the size configuration to be fixed at that size
         this.wConfig = SizeConfig.fixed(this.w);
         this.hConfig = SizeConfig.fixed(this.h);
@@ -69,6 +87,21 @@ export class TextObject extends DrawnObjectBase {
                 clr = this.color.toString();
             }
             //=== YOUR CODE HERE ===
+            //Measure the text
+            let textMeasure = this._measureText(this.text, this.font, ctx);
+            //Set the font
+            ctx.font = this.font;
+            //Check the render type used and draw the text differently depending on the type
+            if (this.renderType === "fill") {
+                //Change the color and draw the text with fill
+                ctx.fillStyle = clr;
+                ctx.fillText(this.text, this.padding.w, textMeasure.baseln + this.padding.h);
+            }
+            else {
+                //Change the color and draw the text with stroke
+                ctx.strokeStyle = clr;
+                ctx.strokeText(this.text, this.padding.w, textMeasure.baseln + this.padding.h);
+            }
         }
         finally {
             // restore the drawing context to the state it was given to us in

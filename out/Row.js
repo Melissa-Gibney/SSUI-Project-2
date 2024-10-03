@@ -77,7 +77,34 @@ export class Row extends Group {
     //
     // Our width is set to the width determined by stacking our children horizontally.
     _doLocalSizing() {
-        //=== YOUR CODE HERE ===max};
+        //=== YOUR CODE HERE ===
+        //Set initial widths to zero
+        let newMinWidth = 0;
+        let newNatWidth = 0;
+        let newMaxWidth = 0;
+        //Set initial heights to zero (max height set to first child's height to prevent issues with the minimum being 0)
+        let newMinHeight = 0;
+        let newNatHeight = 0;
+        let newMaxHeight = 0;
+        //Loop through every child. Add their widths to the wConfig and 
+        //update the hConfig if the heights are higher than the current values
+        this.children.forEach(child => {
+            newMinWidth += child.minW;
+            newNatWidth += child.naturalW;
+            newMaxWidth += child.maxW;
+            if (child.minH > newMinHeight) {
+                newMinHeight = child.minH;
+            }
+            if (child.naturalH > newNatHeight) {
+                newNatHeight = child.naturalH;
+            }
+            if (child.maxH > newMaxHeight) {
+                newMaxHeight = child.maxH;
+            }
+        });
+        //Set wConfig and hConfig to the new values
+        this.wConfig = { min: newMinWidth, nat: newNatWidth, max: newMaxWidth };
+        this.hConfig = { min: newMinHeight, nat: newNatHeight, max: newMaxHeight };
     }
     //. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
     // This method adjusts the width of the children to do horizontal springs and struts 
@@ -135,6 +162,18 @@ export class Row extends Group {
         let availCompr = 0;
         let numSprings = 0;
         //=== YOUR CODE HERE ===
+        this.children.forEach(child => {
+            //Figure out child type is a spring
+            const childString = child.tagString();
+            //If child is not a spring
+            if (!(child instanceof Spring)) {
+                natSum += child.naturalW;
+                availCompr += (child.naturalW - child.minW);
+            }
+            else {
+                numSprings++;
+            }
+        });
         return [natSum, availCompr, numSprings];
     }
     //. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
@@ -143,7 +182,16 @@ export class Row extends Group {
     // are no child springs, this does nothing (which has the eventual effect of leaving 
     // the space at the right of the row as a fallback strategy).
     _expandChildSprings(excess, numSprings) {
-        //=== YOUR CODE HERE ===
+        if (numSprings > 0) {
+            const amountToAdd = excess / numSprings;
+            this.children.forEach(child => {
+                //If the child's type is a spring
+                if (child instanceof Spring) {
+                    child.w = amountToAdd;
+                    child.damageAll();
+                }
+            });
+        }
     }
     //. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
     // Contract our child objects to make up the given amount of shortfall.  Springs
@@ -160,6 +208,10 @@ export class Row extends Group {
         // from the natural height of that child, to get the assigned height.
         for (let child of this.children) {
             //=== YOUR CODE HERE ===
+            const fractionOfAvailCompr = (child.naturalW - child.minW) / availCompr;
+            const fractionOfShortfall = fractionOfAvailCompr * shortfall;
+            child.w = child.naturalW - fractionOfShortfall;
+            child.damageAll();
         }
     }
     //. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
@@ -198,6 +250,24 @@ export class Row extends Group {
         }
         // apply our justification setting for the vertical
         //=== YOUR CODE HERE ===
+        let ypos = 0;
+        this.children.forEach(child => {
+            //Keep in mind that (x, y) is the top left corner of the object
+            if (this.hJustification === 'center') {
+                //Center the child in the parent
+                ypos = this.h / 2 - child.h / 2;
+            }
+            else if (this.hJustification === 'bottom') {
+                //Move the child to the bottom side of the parent, but make sure it has enough
+                //room for its own height
+                ypos = this.h - child.h;
+            }
+            else {
+                //There is already top-justification, so ypos doesn't need to change
+                ypos = 0;
+            }
+            child.y = ypos;
+        });
     }
 }
 //===================================================================

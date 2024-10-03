@@ -36,6 +36,12 @@ export class TextObject extends DrawnObjectBase {
     public get text() {return this._text;}
     public set text(v : string) {
         //=== YOUR CODE HERE ===
+        if(!(this._text === v))
+        {
+            this._text = v;
+            this._recalcSize();
+            //this.damageAll();
+        }
     }
 
     //. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
@@ -68,6 +74,9 @@ export class TextObject extends DrawnObjectBase {
     public get font() {return this._font;}
     public set font(v : string) {
         //=== YOUR CODE HERE ===
+        this.font = v;
+        this._recalcSize();
+        //this.damageAll();
     }  
     
     //. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
@@ -80,6 +89,12 @@ export class TextObject extends DrawnObjectBase {
     public set padding(v : SizeLiteral | number) {
         if (typeof v === 'number') v = {w:v, h:v};
         //=== YOUR CODE HERE ===
+        if(!(v === this._padding))
+        {
+            this._padding = v;
+            this._recalcSize();
+            //this.damageArea(0, 0, this.w, this.h);
+        }
     }
     
     //. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
@@ -108,6 +123,13 @@ export class TextObject extends DrawnObjectBase {
     protected _recalcSize(ctx? : DrawContext) : void {
         //=== YOUR CODE HERE ===
 
+        //Get the current text size
+        let curSize = this._measureText(this.text, this.font, ctx);
+
+        //Set the size of the object to the current text size + the width of the padding on either side of the text
+        this.size = {w: curSize.w + 2 * this.padding.w, h: curSize.h};
+        this.damageAll();
+
         // set the size configuration to be fixed at that size
         this.wConfig = SizeConfig.fixed(this.w);
         this.hConfig = SizeConfig.fixed(this.h);
@@ -134,6 +156,25 @@ export class TextObject extends DrawnObjectBase {
             }
             
             //=== YOUR CODE HERE ===
+            //Measure the text
+            let textMeasure = this._measureText(this.text, this.font, ctx);
+
+            //Set the font
+            ctx.font = this.font;
+            
+            //Check the render type used and draw the text differently depending on the type
+            if(this.renderType === "fill")
+            {
+                //Change the color and draw the text with fill
+                ctx.fillStyle = clr;
+                ctx.fillText(this.text, this.padding.w, textMeasure.baseln + this.padding.h);
+            }
+            else
+            {
+                //Change the color and draw the text with stroke
+                ctx.strokeStyle = clr;
+                ctx.strokeText(this.text, this.padding.w, textMeasure.baseln + this.padding.h);
+            }
 
         }   finally {
             // restore the drawing context to the state it was given to us in

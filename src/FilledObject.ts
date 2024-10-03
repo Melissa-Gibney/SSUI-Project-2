@@ -28,11 +28,27 @@ export class FilledObject extends DrawnObjectBase {
     public override get w() {return super.w;}  
     public override set w(v : number) {
         //=== YOUR CODE HERE ===
+        //Only change the value of the width if v has changed
+        if(!(this._w === v))
+        {
+            this.damageAll();
+            this._w = v;
+            this.wConfig = SizeConfig.fixed(v);
+            this.damageAll();
+        }
     }
 
     public override get h() {return super.h;}
     public override set h(v : number) {
         //=== YOUR CODE HERE ===
+        //Only change the value of the height if v has changed
+        if(!(this._h === v))
+        {
+            this.damageAll();
+            this._h = v;
+            this.hConfig = SizeConfig.fixed(v);
+            this.damageAll();
+        }
     }
 
 
@@ -73,6 +89,8 @@ export class FilledObject extends DrawnObjectBase {
         }
         
         //=== YOUR CODE HERE ===
+        //Fill the entire object
+        ctx.fillRect(0, 0, this.w, this.h);
     }
 
     
